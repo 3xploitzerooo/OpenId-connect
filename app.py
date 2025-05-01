@@ -1,25 +1,26 @@
-from flask import Flask, redirect, request, url_for, session
-import requests
-import json
-from urllib.parse import urlencode
+from flask import Flask, redirect, url_for, request, session
 from jose import jwt
+from urllib.parse import urlencode
 
 app = Flask(__name__)
-app.secret_key = 'YOUR_SECRET_KEY'
+app.secret_key = 'THIS_IS_INSECURE_SECRET'
 
-# Replace with your actual credentials from Google Cloud Console
-GOOGLE_CLIENT_ID = '489703958449-iiqtp7trstd8rom3kbmpcag2da1dgvvf.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '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'
-REDIRECT_URI = 'http://localhost:5000/callback'
-
-# Google's OAuth 2.0 endpoints
+# OpenID Connect (OIDC) config
+GOOGLE_CLIENT_ID = ''
+REDIRECT_URI = "http://localhost:5000/callback"
 AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
-TOKEN_URI = "https://oauth2.googleapis.com/token"
-USERINFO_URI = "https://openidconnect.googleapis.com/v1/userinfo"
 
 @app.route('/')
 def index():
-    return '<a href="/login">Sign in with Google</a>'
+    user = session.get("user")
+    if user:
+        return f"""
+        <h2>Welcome, {user.get('name')}</h2>
+        <p>Email: {user.get('email')}</p>
+        <img src="{user.get('picture', '')}" alt="Profile Picture" width="100">
+        <br><br><a href="/logout">Logout</a>
+        """
+    return '<a href="/login">Sign in with Google</a><br><br><a href="/callback?id_token=FAKE_TOKEN_HERE">Test Forged Login</a>'
 
 @app.route('/login')
 def login():
@@ -35,43 +36,31 @@ def login():
 
 @app.route('/callback')
 def callback():
-    code = request.args.get("code")
-    if not code:
-        return "No code provided."
+    forged_token = request.args.get("id_token")
+    if not forged_token:
+        return "No id_token provided (we're simulating a vulnerable app)."
 
-    # Exchange code for tokens
-    data = {
-        "code": code,
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "redirect_uri": REDIRECT_URI,
-        "grant_type": "authorization_code"
-    }
-
-    token_response = requests.post(TOKEN_URI, data=data)
-    print("Raw Token Response:", token_response.text)
-
-    if token_response.status_code != 200:
-        return f"Failed to get token: {token_response.text}"
-
-    token_json = token_response.json()
-
-    if "id_token" not in token_json:
-        return "No ID token returned. Something went wrong."
-
-    id_token = token_json["id_token"]
-
-    # Decode the JWT without verifying the signature
     try:
+        # Do NOT verify the signature - this is insecure and intentionally vulnerable
         userinfo = jwt.decode(
-            id_token,
-            key='',
-            options={"verify_signature": False, "verify_aud": False, "verify_at_hash": False}
+            forged_token,
+            key='',  # No key since we are skipping signature verification
+            options={
+                "verify_signature": False,
+                "verify_aud": False,
+                "verify_iss": False,
+                "verify_exp": False
+            }
         )
+        session["user"] = userinfo
+        return redirect(url_for("index"))
     except Exception as e:
-        return f"Error decoding ID token: {str(e)}"
+        return f"Failed to decode token: {e}"
 
-    return f"User info:<br>{json.dumps(userinfo, indent=2)}"
+@app.route('/logout')
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("index"))
 
 if __name__ == '__main__':
     app.run(debug=True)
