@@ -5,9 +5,8 @@ from jose import jwt
 from urllib.parse import urlencode
 
 app = Flask(__name__)
-app.secret_key = 'YOUR_SECRET_KEY'  # Replace with any random string you want
+app.secret_key = 'YOUR_SECRET_KEY' 
 
-# Replace with your actual credentials
 GOOGLE_CLIENT_ID = '489703958449-iiqtp7trstd8rom3kbmpcag2da1dgvvf.apps.googleusercontent.com'
 GOOGLE_CLIENT_SECRET = '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'
 REDIRECT_URI = "http://localhost:5000/callback"
