@@ -7,8 +7,8 @@ app = Flask(__name__)
 app.secret_key = 'THIS_IS_INSECURE_SECRET'
 
 # Google OAuth 2.0 Configuration
-GOOGLE_CLIENT_ID = '489703958449-iiqtp7trstd8rom3kbmpcag2da1dgvvf.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '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'
+GOOGLE_CLIENT_ID = ''
+GOOGLE_CLIENT_SECRET = ''
 REDIRECT_URI = "http://localhost:5000/callback"
 AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
